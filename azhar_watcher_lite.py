@@ -25,11 +25,14 @@ NEW_REQUEST_URL = "https://pgs.alazharuniversity.org/my/requests/new"
 AZHAR_EMAIL = os.environ.get("AZHAR_EMAIL")
 AZHAR_PASSWORD = os.environ.get("AZHAR_PASSWORD")
 
-CALLMEBOT_RECIPIENTS = [
-    {"phone": os.environ.get("PHONE_1"), "apikey": os.environ.get("APIKEY_1")},
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")  # رقم Sandbox الافتراضي
+
+# أرقام المستلمين - كل رقم لازم يكون بالصيغة: whatsapp:+971xxxxxxxxx
+WHATSAPP_RECIPIENTS = [
+    v for v in [os.environ.get("WHATSAPP_TO_1"), os.environ.get("WHATSAPP_TO_2")] if v
 ]
-# لو عايزة تضيفي رقم تاني بعدين، هنضيف سطر زي:
-# {"phone": os.environ.get("PHONE_2"), "apikey": os.environ.get("APIKEY_2")},
 
 
 def send_whatsapp_alert():
@@ -37,18 +40,27 @@ def send_whatsapp_alert():
         "🚨 تسجيل الماجستير/الدكتوراه فتح دلوقتي على موقع الأزهر!\n"
         "ادخلي حالًا: https://pgs.alazharuniversity.org/web/login"
     )
-    for r in CALLMEBOT_RECIPIENTS:
-        if not r["phone"] or not r["apikey"]:
-            continue
+    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
+        log.error("بيانات Twilio مش موجودة - تأكدي من GitHub Secrets")
+        return
+    if not WHATSAPP_RECIPIENTS:
+        log.error("مفيش أرقام مستلمين مضافة (WHATSAPP_TO_1 / WHATSAPP_TO_2)")
+        return
+
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"
+    for to_number in WHATSAPP_RECIPIENTS:
         try:
-            resp = requests.get(
-                "https://api.callmebot.com/whatsapp.php",
-                params={"phone": r["phone"], "text": message, "apikey": r["apikey"]},
+            resp = requests.post(
+                url,
+                data={"From": TWILIO_WHATSAPP_FROM, "To": to_number, "Body": message},
+                auth=(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
                 timeout=15,
             )
-            log.info(f"إرسال واتساب لـ {r['phone']} -> {resp.status_code}")
+            log.info(f"إرسال واتساب لـ {to_number} -> {resp.status_code}")
+            if resp.status_code >= 300:
+                log.error(f"رد Twilio: {resp.text}")
         except Exception as e:
-            log.error(f"فشل إرسال واتساب لـ {r['phone']}: {e}")
+            log.error(f"فشل إرسال واتساب لـ {to_number}: {e}")
 
 
 def get_csrf_token(session):
