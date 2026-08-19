@@ -1,0 +1,24 @@
+name: Azhar Registration Watcher
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python azhar_watcher_lite.py
+        env:
+          AZHAR_EMAIL: ${{ secrets.AZHAR_EMAIL }}
+          AZHAR_PASSWORD: ${{ secrets.AZHAR_PASSWORD }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          WHATSAPP_TO_1: ${{ secrets.WHATSAPP_TO_1 }}
+          WHATSAPP_TO_2: ${{ secrets.WHATSAPP_TO_2 }}
