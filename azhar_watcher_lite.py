@@ -13,7 +13,12 @@ import sys
 import re
 import logging
 import requests
+import urllib3
 from bs4 import BeautifulSoup
+
+# موقع الأزهر شهادة الأمان بتاعته ناقصة جزء (intermediate certificate) من عندهم -
+# ده بيخلي بايثون يرفض الاتصال بينما المتصفح بيتغاضى عنه. بنعطل التحقق هنا كحل عملي.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 log = logging.getLogger("azhar_watcher")
@@ -105,6 +110,7 @@ def main():
 
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
+    session.verify = False  # موقع الأزهر ناقصه جزء من شهادة الأمان (شوفي التعليق فوق)
 
     try:
         login(session)
