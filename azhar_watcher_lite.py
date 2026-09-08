@@ -40,11 +40,10 @@ WHATSAPP_RECIPIENTS = [
 ]
 
 
+TWILIO_CONTENT_SID = os.environ.get("TWILIO_CONTENT_SID", "HXc6f4be413e166d011208ac71d0aac573")
+
+
 def send_whatsapp_alert():
-    message = (
-        "🚨 تسجيل الماجستير/الدكتوراه فتح دلوقتي على موقع الأزهر!\n"
-        "ادخلي حالًا: https://pgs.alazharuniversity.org/web/login"
-    )
     if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
         log.error("بيانات Twilio مش موجودة - تأكدي من GitHub Secrets")
         return
@@ -57,7 +56,7 @@ def send_whatsapp_alert():
         try:
             resp = requests.post(
                 url,
-                data={"From": TWILIO_WHATSAPP_FROM, "To": to_number, "Body": message},
+                data={"From": TWILIO_WHATSAPP_FROM, "To": to_number, "ContentSid": TWILIO_CONTENT_SID},
                 auth=(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
                 timeout=15,
             )
